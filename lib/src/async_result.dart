@@ -3,39 +3,39 @@ import 'dart:async';
 import '../result_dart.dart';
 
 /// `AsyncResult<S, E>` represents an asynchronous computation.
-typedef AsyncResult<S extends Object, F extends Object> = Future<Result<S, F>>;
+typedef AsyncResult<S, F> = Future<Result<S, F>>;
 
 /// `AsyncResult<S, E>` represents an asynchronous computation.
-extension AsyncResultExtension<S extends Object, F extends Object> //
+extension AsyncResultExtension<S, F> //
     on AsyncResult<S, F> {
   /// Returns a new `Result`, mapping any `Success` value
   /// using the given transformation and unwrapping the produced `Result`.
-  AsyncResult<W, F> flatMap<W extends Object>(
+  AsyncResult<W, F> flatMap<W>(
     FutureOr<Result<W, F>> Function(S success) fn,
   ) {
-    return then((result) => result.fold(fn, Failure.new));
+    return then((result) => result.fold(fn, Err.new));
   }
 
   /// Returns a new `Result`, mapping any `Error` value
   /// using the given transformation and unwrapping the produced `Result`.
-  AsyncResult<S, W> flatMapError<W extends Object>(
+  AsyncResult<S, W> flatMapError<W>(
     FutureOr<Result<S, W>> Function(F error) fn,
   ) {
-    return then((result) => result.fold(Success.new, fn));
+    return then((result) => result.fold(Ok.new, fn));
   }
 
   /// Returns a new `AsyncResult`, mapping any `Success` value
   /// using the given transformation.
-  AsyncResult<W, F> map<W extends Object>(
+  AsyncResult<W, F> map<W>(
     FutureOr<W> Function(S success) fn,
   ) {
     return then(
       (result) => result.map(fn).fold(
         (success) async {
-          return Success(await success);
+          return Ok(await success);
         },
         (failure) {
-          return Failure(failure);
+          return Err(failure);
         },
       ),
     );
@@ -43,32 +43,32 @@ extension AsyncResultExtension<S extends Object, F extends Object> //
 
   /// Returns a new `Result`, mapping any `Error` value
   /// using the given transformation.
-  AsyncResult<S, W> mapError<W extends Object>(
+  AsyncResult<S, W> mapError<W>(
     FutureOr<W> Function(F error) fn,
   ) {
     return then(
       (result) => result.mapError(fn).fold(
         (success) {
-          return Success(success);
+          return Ok(success);
         },
         (failure) async {
-          return Failure(await failure);
+          return Err(await failure);
         },
       ),
     );
   }
 
-  /// Change a [Success] value.
-  AsyncResult<W, F> pure<W extends Object>(W success) {
+  /// Change a [Ok] value.
+  AsyncResult<W, F> pure<W>(W success) {
     return then((result) => result.pure(success));
   }
 
-  /// Change the [Failure] value.
-  AsyncResult<S, W> pureError<W extends Object>(W error) {
+  /// Change the [Err] value.
+  AsyncResult<S, W> pureError<W>(W error) {
     return mapError((_) => error);
   }
 
-  /// Swap the values contained inside the [Success] and [Failure]
+  /// Swap the values contained inside the [Ok] and [Err]
   /// of this [AsyncResult].
   AsyncResult<F, S> swap() {
     return then((result) => result.swap());
@@ -91,22 +91,17 @@ extension AsyncResultExtension<S extends Object, F extends Object> //
 
   /// Returns the future value of [F] if any.
   Future<F?> exceptionOrNull() {
-    return then((result) => result.exceptionOrNull());
+    return then((result) => result.errOrNull());
   }
 
-  /// Returns true if the current result is an [Failure].
+  /// Returns true if the current result is an [Err].
   Future<bool> isError() {
-    return then((result) => result.isError());
+    return then((result) => result.isErr());
   }
 
-  /// Returns true if the current result is a [Success].
+  /// Returns true if the current result is a [Ok].
   Future<bool> isSuccess() {
-    return then((result) => result.isSuccess());
-  }
-
-  /// Returns the success value as a throwing expression.
-  Future<S> getOrThrow() {
-    return then((result) => result.getOrThrow());
+    return then((result) => result.isOk());
   }
 
   /// Returns the encapsulated value if this instance represents `Success`
@@ -125,22 +120,22 @@ extension AsyncResultExtension<S extends Object, F extends Object> //
   /// Returns the encapsulated `Result` of the given transform function
   /// applied to the encapsulated a `Failure` or the original
   /// encapsulated value if it is success.
-  AsyncResult<S, R> recover<R extends Object>(
+  AsyncResult<S, R> recover<R>(
     FutureOr<Result<S, R>> Function(F failure) onFailure,
   ) {
-    return then((result) => result.fold(Success.new, onFailure));
+    return then((result) => result.fold(Ok.new, onFailure));
   }
 
   /// Performs the given action on the encapsulated Throwable
   /// exception if this instance represents failure.
   /// Returns the original Result unchanged.
-  AsyncResult<S, F> onFailure<W>(void Function(F failure) onFailure) {
+  AsyncResult<S, F> onFailure(void Function(F failure) onFailure) {
     return then((result) => result.onFailure(onFailure));
   }
 
   /// Performs the given action on the encapsulated value if this
   /// instance represents success. Returns the original Result unchanged.
-  AsyncResult<S, F> onSuccess<W>(void Function(S success) onSuccess) {
+  AsyncResult<S, F> onSuccess(void Function(S success) onSuccess) {
     return then((result) => result.onSuccess(onSuccess));
   }
 }
