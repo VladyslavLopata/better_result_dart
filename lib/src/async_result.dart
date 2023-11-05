@@ -138,4 +138,17 @@ extension AsyncResultExtension<S, F> //
   AsyncResult<S, F> onSuccess(void Function(S success) onSuccess) {
     return then((result) => result.onSuccess(onSuccess));
   }
+
+  /// Runs the callback provided within a try-catch block.
+  /// If callback fails and error is caught, it is passed to [onError] callback.
+  static AsyncResult<S, F> tryCatch(
+    Future<S> Function() callback,
+    F Function(Object? error, StackTrace stackTrace) onError,
+  ) async {
+    try {
+      return Ok(await callback());
+    } catch (error, stackTrace) {
+      return Err(onError(error, stackTrace));
+    }
+  }
 }

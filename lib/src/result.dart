@@ -7,8 +7,7 @@ import 'unit.dart' as type_unit;
 ///
 /// Receives two values [F] and [S]
 /// as [F] is an error and [S] is a success.
-@sealed
-abstract class Result<S, F> {
+sealed class Result<S, F> {
   /// Build a [Result] that returns a [Err].
   const factory Result.ok(S s) = Ok<S, F>;
 
@@ -94,6 +93,13 @@ abstract class Result<S, F> {
   Result<S, R> recover<R>(
     Result<S, R> Function(F failure) onFailure,
   );
+
+  /// Runs the callback provided within a try-catch block.
+  /// If callback fails and error is caught, it is passed to [onError] callback.
+  Result<S, F> tryCatch(
+    S Function() callback,
+    F Function(Object? error, StackTrace stackTrace) onError,
+  );
 }
 
 /// Success Result.
@@ -101,7 +107,7 @@ abstract class Result<S, F> {
 /// return it when the result of a [Result] is
 /// the expected value.
 @immutable
-class Ok<S, F> implements Result<S, F> {
+final class Ok<S, F> implements Result<S, F> {
   /// Receives the [S] param as
   /// the successful result.
   const Ok(
@@ -212,6 +218,18 @@ class Ok<S, F> implements Result<S, F> {
     onSuccess(_success);
     return this;
   }
+
+  @override
+  Result<S, F> tryCatch(
+    S Function() callback,
+    F Function(Object? error, StackTrace stackTrace) onError,
+  ) {
+    try {
+      return Ok(callback());
+    } catch (error, stackTrace) {
+      return Err(onError(error, stackTrace));
+    }
+  }
 }
 
 /// Error Result.
@@ -219,7 +237,7 @@ class Ok<S, F> implements Result<S, F> {
 /// return it when the result of a [Result] is
 /// not the expected value.
 @immutable
-class Err<S, F> implements Result<S, F> {
+final class Err<S, F> implements Result<S, F> {
   /// Receives the [F] param as
   /// the error result.
   const Err(this._failure);
@@ -331,5 +349,17 @@ class Err<S, F> implements Result<S, F> {
   @override
   Result<S, F> onSuccess(void Function(S success) onSuccess) {
     return this;
+  }
+
+  @override
+  Result<S, F> tryCatch(
+    S Function() callback,
+    F Function(Object? error, StackTrace stackTrace) onError,
+  ) {
+    try {
+      return Ok(callback());
+    } catch (error, stackTrace) {
+      return Err(onError(error, stackTrace));
+    }
   }
 }
