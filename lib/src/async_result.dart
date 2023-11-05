@@ -141,9 +141,9 @@ extension AsyncResultExtension<S, F> //
 
   /// Runs the callback provided within a try-catch block.
   /// If callback fails and error is caught, it is passed to [onError] callback.
-  static AsyncResult<S, F> tryCatch(
+  static AsyncResult<S, F> tryCatch<S, F>(
     Future<S> Function() callback,
-    F Function(Object? error, StackTrace stackTrace) onError,
+    F Function(Object error, StackTrace stackTrace) onError,
   ) async {
     try {
       return Ok(await callback());

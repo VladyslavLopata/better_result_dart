@@ -14,6 +14,19 @@ sealed class Result<S, F> {
   /// Build a [Result] that returns a [Err].
   const factory Result.err(F e) = Err<S, F>;
 
+  /// Runs the callback provided within a try-catch block.
+  /// If callback fails and error is caught, it is passed to [onError] callback.
+  factory Result.tryCatch(
+    S Function() callback,
+    F Function(Object? error, StackTrace stackTrace) onError,
+  ) {
+    try {
+      return Ok(callback());
+    } catch (e, s) {
+      return Err(onError(e, s));
+    }
+  }
+
   /// Returns the encapsulated value if this instance represents `Success`
   /// or the result of `onFailure` function for
   /// the encapsulated a `Failure` value.
@@ -92,13 +105,6 @@ sealed class Result<S, F> {
   /// encapsulated value if it is success.
   Result<S, R> recover<R>(
     Result<S, R> Function(F failure) onFailure,
-  );
-
-  /// Runs the callback provided within a try-catch block.
-  /// If callback fails and error is caught, it is passed to [onError] callback.
-  Result<S, F> tryCatch(
-    S Function() callback,
-    F Function(Object? error, StackTrace stackTrace) onError,
   );
 }
 
@@ -217,18 +223,6 @@ final class Ok<S, F> implements Result<S, F> {
   Result<S, F> onSuccess(void Function(S success) onSuccess) {
     onSuccess(_success);
     return this;
-  }
-
-  @override
-  Result<S, F> tryCatch(
-    S Function() callback,
-    F Function(Object? error, StackTrace stackTrace) onError,
-  ) {
-    try {
-      return Ok(callback());
-    } catch (error, stackTrace) {
-      return Err(onError(error, stackTrace));
-    }
   }
 }
 
@@ -349,17 +343,5 @@ final class Err<S, F> implements Result<S, F> {
   @override
   Result<S, F> onSuccess(void Function(S success) onSuccess) {
     return this;
-  }
-
-  @override
-  Result<S, F> tryCatch(
-    S Function() callback,
-    F Function(Object? error, StackTrace stackTrace) onError,
-  ) {
-    try {
-      return Ok(callback());
-    } catch (error, stackTrace) {
-      return Err(onError(error, stackTrace));
-    }
   }
 }
