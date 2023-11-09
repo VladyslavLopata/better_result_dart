@@ -18,12 +18,25 @@ sealed class Result<S, F> {
   /// If callback fails and error is caught, it is passed to [onError] callback.
   factory Result.tryCatch(
     S Function() callback,
-    F Function(Object? error, StackTrace stackTrace) onError,
+    F Function(Object error, StackTrace stackTrace) onError,
   ) {
     try {
       return Ok(callback());
     } catch (e, s) {
       return Err(onError(e, s));
+    }
+  }
+
+  /// Runs the asyncronous callback provided within a try-catch block.
+  /// If callback fails and error is caught, it is passed to [onError] callback.
+  static AsyncResult<S, F> tryCatchAsync<S, F>(
+    Future<S> Function() callback,
+    F Function(Object error, StackTrace stackTrace) onError,
+  ) async {
+    try {
+      return Ok(await callback());
+    } catch (error, stackTrace) {
+      return Err(onError(error, stackTrace));
     }
   }
 

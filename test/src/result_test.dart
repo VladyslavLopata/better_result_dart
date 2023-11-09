@@ -1,3 +1,4 @@
+// ignore: lines_longer_than_80_chars
 // ignore_for_file: inference_failure_on_function_invocation, inference_failure_on_instance_creation
 
 import 'package:meta/meta.dart';
@@ -12,6 +13,24 @@ void main() {
   });
 
   group('factories', () {
+    test(
+      'Result.tryCatch sucess',
+      () {
+        final result = Result.tryCatch(() => 0, (_, __) => null);
+        expect(result.getOrNull(), 0);
+      },
+    );
+    test(
+      'Result.tryCatch failure',
+      () {
+        final result = Result.tryCatch(
+          () => throw const MyException('Error'),
+          (e, __) => e,
+        );
+        expect(result.errOrNull(), isA<MyException>());
+        expect((result.errOrNull()! as MyException).message, 'Error');
+      },
+    );
     test('Success.unit', () {
       final result = Ok.unit();
       expect(result.getOrNull(), unit);
@@ -253,6 +272,27 @@ Given a success result,
       final value = result.getOrDefault(2);
       expect(value, 2);
     });
+  });
+
+  group('tryCatchAsync', () {
+    test(
+      'Result.tryCatchAsync sucess',
+      () async {
+        final result = Result.tryCatchAsync(() async => 0, (_, __) => null);
+        expect(await result.getOrNull(), 0);
+      },
+    );
+    test(
+      'Result.tryCatchAsync failure',
+      () async {
+        final result = Result.tryCatchAsync(
+          () async => throw const MyException('Error'),
+          (e, __) => e,
+        );
+        expect((await result).errOrNull(), isA<MyException>());
+        expect(((await result).errOrNull()! as MyException).message, 'Error');
+      },
+    );
   });
 }
 
